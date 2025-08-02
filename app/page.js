@@ -1,103 +1,107 @@
-import Image from "next/image";
+"use client"
+
+import { onAuthStateChanged, signInAnonymously, signOut } from "firebase/auth";
+import { db, auth, rtdb } from "@/lib/firebaseConfigs";
+
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react"
+import { setDoc, doc } from "firebase/firestore";
+import { set, ref, get } from "firebase/database";
+
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+	let [userName, setUsername] = useState("");
+	let [user, setUser] = useState(null);
+	let [loading, setLoading] = useState(true);
+	let [joinRoomCode, setJoinRoomCode] = useState("");
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+	const router = useRouter();
+
+	async function createUser(userName) {
+		await signInAnonymously(auth);
+
+		onAuthStateChanged(auth, (currentUser) => {
+			if (currentUser) {
+				setDoc(doc(db, "users", currentUser.uid), {
+					username: userName
+				})
+			}
+		})
+
+
+		console.log("Successfully signed in with")
+	}
+
+	useEffect(() => {
+		onAuthStateChanged(auth, (currentUser) => {
+			if (currentUser) {
+				console.log("User is signed in with", currentUser.uid)
+				setUser(currentUser)
+
+			} else {
+				console.log("User is not signed in, Please consider signing in")
+			}
+			setLoading(false);
+		})
+	}, [])
+
+	if (loading) {
+		return (
+			<p>
+				Please Wait... 😉{":)"}
+			</p>
+		)
+	}
+
+	async function createRoom() {
+		let roomCode = Math.floor(Math.random() * 10000).toString();
+		if (roomCode.length === 1) roomCode = "000" + roomCode;
+		else if (roomCode.length === 2) roomCode = "00" + roomCode;
+		else if (roomCode.length === 3) roomCode = "0" + roomCode;
+
+		await set(ref(rtdb, `room/${roomCode}`), {
+			gameState: 'not-started',
+			players: [user.uid]
+		})
+
+		router.push(`/gameroom/${roomCode}`)
+
+	}
+
+	async function joinRoom(code) {
+		const playersRef = ref(rtdb, `room/${code}/players`);
+		const snapshot = await get(playersRef);
+		let currentPlayers = snapshot.val();
+
+		currentPlayers.push(user.uid);
+		await set(playersRef, currentPlayers);
+		// console.log(snapshot.val()[0]);
+
+	}
+
+	return (
+		<div className="bg-amber-100 text-black">
+			{
+				user ? (
+					<div>
+
+						<button className="bg-yellow-300" onClick={() => createRoom()}>Create Room</button> <br />
+						<hr />
+						<input type="text" placeholder="Enter room code" onChange={(e) => setJoinRoomCode(e.target.value)} />
+						<button onClick={() => joinRoom(joinRoomCode)}>Join a room</button> <br />
+						<button onClick={() => {
+							signOut(auth);
+							setUser(null);
+						}}>Sign out</button>
+					</div>
+				) : (
+					<div>
+						<input type="text" placeholder="enter username" value={userName} onChange={(e) => setUsername(e.target.value)} />
+						<button onClick={() => createUser(userName)}>Create</button>
+					</div>
+				)
+			}
+		</div>
+
+	)
 }
