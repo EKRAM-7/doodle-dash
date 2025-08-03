@@ -76,6 +76,7 @@ export default function Home() {
 		currentPlayers.push(user.uid);
 		await set(playersRef, currentPlayers);
 		// console.log(snapshot.val()[0]);
+		router.push(`/gameroom/${code}`)
 
 	}
 
