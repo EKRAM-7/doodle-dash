@@ -45,7 +45,7 @@ export default function ClientRoom({ roomCode }) {
 
     return (
         <div className="w-screen h-screen">
-            <DrawingArea />
+            <DrawingArea roomCode={roomCode}/>
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold">Room Code : {roomCode}</h1>
             <Players roomCode={roomCode}/>
         </div>

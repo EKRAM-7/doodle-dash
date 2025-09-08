@@ -61,7 +61,8 @@ export default function Home() {
 
 		await set(ref(rtdb, `room/${roomCode}`), {
 			gameState: 'not-started',
-			players: [user.uid]
+			players: [user.uid],
+			drawingLines: []
 		})
 
 		router.push(`/gameroom/${roomCode}`)

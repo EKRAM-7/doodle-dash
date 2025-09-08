@@ -1,18 +1,32 @@
 "use client"
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Stage, Layer, Line } from "react-konva"
+import { ref, onValue, set } from "firebase/database";
+import { rtdb } from "@/lib/firebaseConfigs";
 
-
-export default function DrawingArea() {
-	const [lines, setLines] = useState([]);
+export default function DrawingArea({roomCode}) {
+    const [lines, setLines] = useState([]);
     const isDrawing = useRef(false);
     const [pencilStrokeWidth, setPencilStrokeWidth] = useState(2);
     const [color, setColor] = useState("#ffffff");
 
+
+    useEffect(() => {
+        const drawingLinesRef = ref(rtdb, `room/${roomCode}/drawingLines`);
+        onValue(drawingLinesRef, async (snapshot) => {
+            set(drawingLinesRef, lines);
+        })
+
+    }, [])
+
+    useEffect(() => {
+
+    }, [lines])
+
     const handleMouseDown = (e) => {
         isDrawing.current = true;
         const pos = e.target.getStage().getPointerPosition();
-        setLines([...lines, { points: [pos.x, pos.y], strokeWidth: pencilStrokeWidth, strokeColor:color }]);
+        setLines([...lines, { points: [pos.x, pos.y], strokeWidth: pencilStrokeWidth, strokeColor: color }]);
 
     }
 
@@ -66,7 +80,7 @@ export default function DrawingArea() {
                 <option value={6}>6 px</option>
             </select>
 
-            <input type="color" value={color} onChange={handleColorChange}/>
+            <input type="color" value={color} onChange={handleColorChange} />
 
 
             <Stage
