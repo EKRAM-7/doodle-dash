@@ -4,7 +4,7 @@ import { Stage, Layer, Line } from "react-konva"
 import { ref, onValue, set, get } from "firebase/database";
 import { rtdb } from "@/lib/firebaseConfigs";
 
-export default function DrawingArea({roomCode}) {
+export default function DrawingArea({ roomCode }) {
     const [lines, setLines] = useState([]);
     const isDrawing = useRef(false);
     const [pencilStrokeWidth, setPencilStrokeWidth] = useState(2);
@@ -13,23 +13,19 @@ export default function DrawingArea({roomCode}) {
 
     useEffect(() => {
         const drawingLinesRef = ref(rtdb, `room/${roomCode}/drawingLines`);
-        if (lines.length > 0) {
-            onValue(drawingLinesRef, async (snapshot) => {
-                let drawingLines = await get(drawingLinesRef);
-                setLines(drawingLines.val());
-            })
-        }
-        /* async function test() {
-            let drawingLines = await get(drawingLinesRef)
-            console.table(drawingLines);
-        }
-
-        test(); */
-
+        onValue(drawingLinesRef, (snapshot) => {
+            const value = snapshot.val();
+            console.log(value);
+            if (value !== null) {
+                setLines(value);
+            } else {
+                setLines([]); // Keep lines as empty array if no data
+            }
+        })
     }, [])
 
     useEffect(() => {
-        
+
         async function updateDrawing() {
             const drawingLinesRef = ref(rtdb, `room/${roomCode}/drawingLines`);
             await set(drawingLinesRef, lines);
@@ -100,8 +96,8 @@ export default function DrawingArea({roomCode}) {
 
 
             <Stage
-                width={700}
-                height={700}
+                width={300}
+                height={300}
                 onMouseDown={handleMouseDown}
                 onTouchStart={handleMouseDown}
                 onMouseMove={handleMouseMove}
@@ -122,6 +118,7 @@ export default function DrawingArea({roomCode}) {
                             globalCompositeOperation="source-over"
                         />
                     ))}
+
                 </Layer>
             </Stage>
         </>
