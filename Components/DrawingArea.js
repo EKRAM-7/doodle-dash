@@ -1,7 +1,7 @@
 "use client"
 import { useState, useRef, useEffect } from "react";
 import { Stage, Layer, Line } from "react-konva"
-import { ref, onValue, set } from "firebase/database";
+import { ref, onValue, set, get } from "firebase/database";
 import { rtdb } from "@/lib/firebaseConfigs";
 
 export default function DrawingArea({roomCode}) {
@@ -12,14 +12,22 @@ export default function DrawingArea({roomCode}) {
 
 
     useEffect(() => {
-        const drawingLinesRef = ref(rtdb, `room/${roomCode}/drawingLines`);
         onValue(drawingLinesRef, async (snapshot) => {
-            set(drawingLinesRef, lines);
+            const drawingLinesRef = ref(rtdb, `room/${roomCode}/drawingLines`);
+            let drawingLines = (await get(drawingLinesRef)).val();
+            setLines(drawingLines);
         })
 
     }, [])
 
     useEffect(() => {
+        
+        async function updateDrawing() {
+            const drawingLinesRef = ref(rtdb, `room/${roomCode}/drawingLines`);
+            await set(drawingLinesRef, lines);
+        }
+
+        updateDrawing();
 
     }, [lines])
 
