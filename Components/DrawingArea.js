@@ -13,10 +13,18 @@ export default function DrawingArea({roomCode}) {
 
     useEffect(() => {
         const drawingLinesRef = ref(rtdb, `room/${roomCode}/drawingLines`);
-        onValue(drawingLinesRef, async (snapshot) => {
-            let drawingLines = await get(drawingLinesRef).val();
-            setLines(drawingLines);
-        })
+        if (lines.length > 0) {
+            onValue(drawingLinesRef, async (snapshot) => {
+                let drawingLines = await get(drawingLinesRef);
+                setLines(drawingLines.val());
+            })
+        }
+        /* async function test() {
+            let drawingLines = await get(drawingLinesRef)
+            console.table(drawingLines);
+        }
+
+        test(); */
 
     }, [])
 
