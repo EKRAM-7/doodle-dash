@@ -12,9 +12,9 @@ export default function DrawingArea({roomCode}) {
 
 
     useEffect(() => {
+        const drawingLinesRef = ref(rtdb, `room/${roomCode}/drawingLines`);
         onValue(drawingLinesRef, async (snapshot) => {
-            const drawingLinesRef = ref(rtdb, `room/${roomCode}/drawingLines`);
-            let drawingLines = (await get(drawingLinesRef)).val();
+            let drawingLines = await get(drawingLinesRef).val();
             setLines(drawingLines);
         })
 
