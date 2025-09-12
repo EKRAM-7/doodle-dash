@@ -8,8 +8,10 @@ import { useEffect, useState } from "react"
 import { setDoc, doc } from "firebase/firestore";
 import { set, ref, get } from "firebase/database";
 
+import { Loader } from "@/Components/Loader";
 
 export default function Home() {
+	const [actionLoading, setActionLoading] = useState(false);
 	let [userName, setUsername] = useState("");
 	let [user, setUser] = useState(null);
 	let [loading, setLoading] = useState(true);
@@ -47,54 +49,69 @@ export default function Home() {
 
 	if (loading) {
 		return (
-			<p>
-				Please Wait... 😉{":)"}
-			</p>
+			<Loader />
 		)
 	}
 
 	async function createRoom() {
+		setActionLoading(true);
 		let roomCode = Math.floor(Math.random() * 10000).toString();
 		if (roomCode.length === 1) roomCode = "000" + roomCode;
 		else if (roomCode.length === 2) roomCode = "00" + roomCode;
 		else if (roomCode.length === 3) roomCode = "0" + roomCode;
 
-		await set(ref(rtdb, `room/${roomCode}`), {
+		set(ref(rtdb, `room/${roomCode}`), {
 			gameState: 'not-started',
 			players: [user.uid],
 			drawingLines: []
 		})
 
-		router.push(`/gameroom/${roomCode}`)
+		router.push(`/gameroom/${roomCode}`);
 
 	}
 
 	async function joinRoom(code) {
+		setActionLoading(true);
 		const playersRef = ref(rtdb, `room/${code}/players`);
 		const snapshot = await get(playersRef);
 		let currentPlayers = snapshot.val();
 
 		currentPlayers.push(user.uid);
-		await set(playersRef, currentPlayers);
-		// console.log(snapshot.val()[0]);
+		set(playersRef, currentPlayers);
 		router.push(`/gameroom/${code}`)
-
 	}
 
+	if (actionLoading) {
+		return (
+			<Loader />
+		)
+	}
+
+
 	return (
-		<div className="bg-amber-100 text-black">
+		<div className="text-black border-2 border-black p-10 rounded-lg z-10">
 			{
 				user ? (
-					<div>
+					<div className="flex justify-center items-center flex-col gap-4">
 
-						<button className="bg-yellow-300" onClick={() => createRoom()}>Create Room</button> <br />
-						<hr />
-						<input type="text" placeholder="Enter room code" onChange={(e) => setJoinRoomCode(e.target.value)} />
-						<button onClick={() => joinRoom(joinRoomCode)}>Join a room</button> <br />
-						<button onClick={() => {
+						<button className="bg-yellow-300 border-2 border-black p-4 rounded-lg" onClick={() => createRoom()}>Create Room</button> 
+
+						
+
+						<input type="text" placeholder="Enter room code" onChange={(e) => setJoinRoomCode(e.target.value)} 
+						className="border-2 border-black rounded-lg p-2 box-border text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl h-10 bg-white text-black"
+						/>
+
+						<button className="bg-cyan-200 border-2 border-black rounded-lg p-4 box-border" onClick={() => joinRoom(joinRoomCode)}>JOIN</button> 
+						
+						
+
+						<button className="bg-red-400 text-white border-2 border-black rounded-lg p-4 box-border"
+						onClick={() => {
 							signOut(auth);
 							setUser(null);
 						}}>Sign out</button>
+
 					</div>
 				) : (
 					<div>
