@@ -22,7 +22,7 @@ export default function ClientRoom({ roomCode }) {
                     if (currentUser) {
                         setUser(currentUser);
                     }
-                })
+        })
 
         const playersRef = ref(rtdb, `room/${roomCode}/players`);
         onValue(playersRef, async (snapshot) => {
@@ -71,7 +71,7 @@ export default function ClientRoom({ roomCode }) {
             </div>
             {/* <button onClick={startGame}className="w-1/4 h-[35px] bg-green-500 text-white font-bold">▶️Start</button> */}
             {
-                user.uid === playerIds[0] ? (
+                 user && playerIds.length > 0 && user.uid === playerIds[0] ? (
                     <button onClick={startGame}className="w-1/4 h-[35px] bg-green-500 text-white font-bold">▶️Start</button>
                 ) : null
             }
