@@ -98,7 +98,7 @@ export default function Home() {
 
 						
 
-						<input type="text" placeholder="Enter room code" onChange={(e) => setJoinRoomCode(e.target.value)} 
+						<input type="number" placeholder="Enter room code" onChange={(e) => setJoinRoomCode(e.target.value)} 
 						className="border-2 border-black rounded-lg p-2 box-border text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl h-10 bg-white text-black"
 						/>
 

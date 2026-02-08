@@ -9,7 +9,8 @@ export default function DrawingArea({ roomCode }) {
     const isDrawing = useRef(false);
     const [pencilStrokeWidth, setPencilStrokeWidth] = useState(2);
     const [color, setColor] = useState("#ffffff");
-
+    const containerRef = useRef();
+    const [size, setSize] = useState({ width: 0, height: 0 });
 
     useEffect(() => {
         const drawingLinesRef = ref(rtdb, `room/${roomCode}/drawingLines`);
@@ -19,9 +20,19 @@ export default function DrawingArea({ roomCode }) {
             if (value !== null) {
                 setLines(value);
             } else {
-                setLines([]); // Keep lines as empty array if no data
+                setLines([]);
             }
         })
+        function updateDimensions() {
+            if (containerRef.current) {
+                setSize({
+                    width: containerRef.current.offsetWidth,
+                    height: containerRef.current.offsetHeight * 0.85
+                });
+            }
+        }
+        updateDimensions();
+        window.addEventListener("resize", updateDimensions);
     }, [])
 
     useEffect(() => {
@@ -74,7 +85,8 @@ export default function DrawingArea({ roomCode }) {
     }
 
     return (
-        <>
+        <div ref={containerRef} className="bg-lime-300 w-3/4 h-[35%]">
+
             <button onClick={undo}>
                 ↪️
             </button>
@@ -86,7 +98,9 @@ export default function DrawingArea({ roomCode }) {
                 value={pencilStrokeWidth}
                 onChange={(e) => setPencilStrokeWidth(Number(e.target.value))}
             >
-                <option value={1}>1 px</option>
+                <option value={1}>
+                    1 px
+                </option>
                 <option value={2}>2 px</option>
                 <option value={4}>4 px</option>
                 <option value={6}>6 px</option>
@@ -96,8 +110,8 @@ export default function DrawingArea({ roomCode }) {
 
 
             <Stage
-                width={300}
-                height={300}
+                width={size.width}
+                height={size.height}
                 onMouseDown={handleMouseDown}
                 onTouchStart={handleMouseDown}
                 onMouseMove={handleMouseMove}
@@ -121,6 +135,9 @@ export default function DrawingArea({ roomCode }) {
 
                 </Layer>
             </Stage>
-        </>
+
+
+
+        </div>
     )
 }
