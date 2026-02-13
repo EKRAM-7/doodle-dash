@@ -53,12 +53,11 @@ export default function ClientRoom({ roomCode }) {
 
 
     function startGame() {
-        // console.log(playerIds[0], playerNames[0]);
         console.log(user);
     }
 
     return (
-        <div className="w-screen h-screen max-w-[750px] z-10 pr-2 pl-2 border-4 border-black gap-2 flex flex-col items-center">
+        <div className="w-screen h-screen max-w-[400px] z-10 pr-2 pl-2 border-4 border-black gap-2 flex flex-col justify-center-safe items-center overflow-hidden">
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white">Room Code : {roomCode}</h1>
             <DrawingArea roomCode={roomCode}/>
             <div className="w-3/4 flex"> 
@@ -67,9 +66,10 @@ export default function ClientRoom({ roomCode }) {
             </div>
             <div className="w-3/4">
                 <input type="text" className="w-3/4 h-[35px] p-[1rem] font-bold bg-white"/>
-                <button className="w-1/4 h-[35px] bg-yellow-300 font-bold">Send</button>
+                <button className="w-1/4 h-[35px] bg-red-300 font-bold">Send</button>
             </div>
-            {/* <button onClick={startGame}className="w-1/4 h-[35px] bg-green-500 text-white font-bold">▶️Start</button> */}
+
+            {/* Only show the start button when the logged in user is the host of the room*/}
             {
                  user && playerIds.length > 0 && user.uid === playerIds[0] ? (
                     <button onClick={startGame}className="w-1/4 h-[35px] bg-green-500 text-white font-bold">▶️Start</button>

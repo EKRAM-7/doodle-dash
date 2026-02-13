@@ -85,7 +85,7 @@ export default function DrawingArea({ roomCode }) {
     }
 
     return (
-        <div ref={containerRef} className="bg-lime-300 w-3/4 h-[35%]">
+        <div ref={containerRef} className="bg-white w-[320px] h-[300px]">
 
             <button onClick={undo}>
                 ↪️
@@ -94,7 +94,7 @@ export default function DrawingArea({ roomCode }) {
                 🗑️
             </button>
 
-            <select
+            {/* <select
                 value={pencilStrokeWidth}
                 onChange={(e) => setPencilStrokeWidth(Number(e.target.value))}
             >
@@ -104,14 +104,21 @@ export default function DrawingArea({ roomCode }) {
                 <option value={2}>2 px</option>
                 <option value={4}>4 px</option>
                 <option value={6}>6 px</option>
-            </select>
+            </select> */}
+
+            <div className="bg-yellow-400 w-[70px] h-[20px] inline-block">
+                <div className="hidden">
+                    <span className="w-[70px] h-[1px]"></span>
+                </div>
+            </div>
 
             <input type="color" value={color} onChange={handleColorChange} />
 
 
             <Stage
-                width={size.width}
-                height={size.height}
+                // width={size.width}
+                width={320}
+                height={300}
                 onMouseDown={handleMouseDown}
                 onTouchStart={handleMouseDown}
                 onMouseMove={handleMouseMove}
