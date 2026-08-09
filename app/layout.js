@@ -19,8 +19,13 @@ export const metadata = {
 export default function RootLayout({ children }) {
 	return (
 		<html lang="en">
+			<head>
+				<link rel="preconnect" href="https://fonts.googleapis.com" />
+				<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet" />
+			</head>
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased h-svh bg-gray-300 flex justify-center items-center overflow-hidden`}
+				style={{ fontFamily: "'Fredoka', sans-serif" }}
 			>
 				{/* <div className="relative h-screen w-screen bg-gray-900 overflow-hidden flex items-center justify-center">
 
@@ -34,12 +39,12 @@ export default function RootLayout({ children }) {
 				</div> */}
 
 				<div className="h-screen w-screen flex items-center justify-center bg-gray-900 relative overflow-hidden">
-					
+
 
 					<div className="absolute w-[600px] h-[600px] rounded-full bg-gradient-radial opacity-40 blur-3xl animate-pulse z-0"
-     style={{ background: "radial-gradient(circle, #ec4899 0%, #a78bfa 60%, transparent 100%)" }}>
-</div>
-			  	{children}
+						style={{ background: "radial-gradient(circle, #ec4899 0%, #a78bfa 60%, transparent 100%)" }}>
+					</div>
+					{children}
 				</div>
 
 			</body>

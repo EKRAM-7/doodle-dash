@@ -5,7 +5,7 @@ import { ref, onValue, set, push, onChildAdded, get } from "firebase/database";
 import { onAuthStateChanged } from "firebase/auth";
 import { rtdb, auth } from "@/lib/firebaseConfigs";
 
-export default function DrawingArea({ roomCode, isDrawer, gameState }) {
+export default function DrawingArea({ roomCode}) {
     const [lines, setLines] = useState([]);           // completed strokes (static layer)
     const [activeLine, setActiveLine] = useState(null); // current stroke being drawn (active layer)
     const isDrawing = useRef(false);
@@ -17,26 +17,62 @@ export default function DrawingArea({ roomCode, isDrawer, gameState }) {
     const throttleTimer = useRef(null);
     const activeLineRef = useRef(null); // ref mirror of activeLine for use inside throttled callbacks
     const lastUndoTimestamp = useRef(null);
-    // const [isDrawer, setIsDrawer] = useState(false);
-
+    const [isDrawer, setIsDrawer] = useState(false);
+    const [user, setUser] = useState(null);
+    const [playerIds, setPlayerIds] = useState(null);
+    const [whoseTurn, setWhoseTurn] = useState(null);
+    
     // ─── CHECK if current user is the drawer
     // This effect runs whenever the user or playerIds changes, and sets isDrawer to true if the current user is the first player in the list. 
     // NOTE: This sets the first player in the list as the drawer. Later on, the drawer will change after every round.
+    useEffect(() => {
+        if (user && playerIds && whoseTurn !== null && user.uid === playerIds[whoseTurn]) {
+            setIsDrawer(true);
+        } else {
+            setIsDrawer(false);
+        }
+    }, [user, playerIds, whoseTurn]);
 
 
     // ─── LISTEN for strokes from other players ───────────────────────────────
 
     useEffect(() => {
+        onAuthStateChanged(auth, (currentUser) => {
+            if (currentUser) {
+                setUser(currentUser);
+            }
+        })
 
-        const drawingLinesRef = ref(rtdb, `room/${roomCode}/drawingLines`);
+        const whoseTurnRef = ref(rtdb, `room/${roomCode}/whoseTurn`);
+        onValue(whoseTurnRef, (snapshot) => {
+            console.log("whoseTurn updated:", snapshot.val());
+            setWhoseTurn(snapshot.val());
+        });
+
+        async function fetchPlayers() {
+            const playersRef = ref(rtdb, `room/${roomCode}/players`);
+            const snapshot = await get(playersRef);
+            const idArray = snapshot.val();
+            setPlayerIds(idArray);
+        }
+        fetchPlayers();
+        
+        const drawingLinesRef = ref(rtdb, `room/${roomCode}/drawingLines`); 
         // onChildAdded fires once per existing stroke on mount, then for each new one.
         // This means we only process NEW strokes, not the whole array every time.
         const unsubscribe = onChildAdded(drawingLinesRef, (snapshot) => {
-            const stroke = snapshot.val();
+            /* const stroke = snapshot.val();
+            if (stroke) {
+                setLines(prev => [...prev, stroke]);
+            } */
+
+            const stroke = snapshot.val(); 
+            // console.log(stroke);
             const key = snapshot.key; // 👈 save the key
             if (stroke) {
                 setLines(prev => [...prev, { ...stroke, _key: key }]);
             }
+            // console.log(lines);
         });
 
         const clearRef = ref(rtdb, `room/${roomCode}/clearTimestamp`);
@@ -66,13 +102,11 @@ export default function DrawingArea({ roomCode, isDrawer, gameState }) {
     }, [roomCode]);
 
 
-
-
     // ─── SEND the completed stroke to Firebase (only on mouse/touch up) ───────
     const pushStrokeToFirebase = useCallback(async (stroke) => {
         const drawingLinesRef = ref(rtdb, `room/${roomCode}/drawingLines`);
         await push(drawingLinesRef, stroke); // push() adds a new child, doesn't overwrite
-    }, [roomCode]);
+    }, [roomCode]); 
 
     // ─── THROTTLED point sender (during active drawing) ───────────────────────
     // Sends only new points to Firebase at most every 30ms instead of every frame.
@@ -152,7 +186,7 @@ export default function DrawingArea({ roomCode, isDrawer, gameState }) {
         setLines([]);
         setActiveLine(null);
         // Write a clear signal instead of nuking the whole node
-        set(ref(rtdb, `room/${roomCode}/clearTimestamp`), Date.now());
+        set(ref(rtdb, `room/${roomCode}/clearTimestamp`), Date.now()); 
         set(ref(rtdb, `room/${roomCode}/drawingLines`), null);
     };
 
@@ -163,45 +197,28 @@ export default function DrawingArea({ roomCode, isDrawer, gameState }) {
 
     return (
         <div ref={containerRef} className="bg-white w-[320px] h-[300px]">
-            {isDrawer && gameState !== "break" && (
-                <div className="flex items-center gap-2 px-2 py-1.5 bg-[#F3F1FF] border-b-2 border-[#6D5BD0]/20">
-                    <button
-                        onClick={undo}
-                        className="h-[28px] w-[28px] flex items-center justify-center rounded-full bg-white shadow-sm border border-[#6D5BD0]/30 hover:bg-[#EDEBFF] active:scale-95 transition-all"
-                    >
-                        ↪️
-                    </button>
-                    <button
-                        onClick={clearCanvas}
-                        className="h-[28px] w-[28px] flex items-center justify-center rounded-full bg-white shadow-sm border border-[#6D5BD0]/30 hover:bg-[#EDEBFF] active:scale-95 transition-all"
-                    >
-                        🗑️
-                    </button>
+            {isDrawer && (
+                <div className="flex items-center gap-2">
+                    <button onClick={undo} className="h-[20px]">↪️</button>
+                    <button onClick={clearCanvas} className="h-[20px]">🗑️</button>
 
-                    <div className="w-[70px] h-[24px] relative" onClick={toggleDropDown}>
+                    <div className="w-[70px] h-[20px] relative" onClick={toggleDropDown}>
                         {!strokeDropdownOpen ? (
-                            <div className="w-full h-full bg-white rounded-full shadow-sm border border-[#6D5BD0]/30 flex items-center justify-center cursor-pointer">
-                                <span className={`w-[45px] h-[${pencilStrokeWidth}px] bg-[#6D5BD0] rounded-full`}></span>
-                            </div>
+                            <span className={`w-[60px] h-[${pencilStrokeWidth}px] bg-black absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-5`}></span>
                         ) : null}
 
                         {strokeDropdownOpen ? (
-                            <div className="bg-white w-[70px] h-[100px] flex items-center justify-center flex-col rounded-xl shadow-md border border-[#6D5BD0]/30 absolute top-0 left-0 z-10">
+                            <div className="bg-pink-300 w-[70px] h-[100px] flex items-center justify-center flex-col">
                                 {[2, 4, 6, 8].map(w => (
-                                    <div key={w} className="w-[60px] h-[20px] flex items-center justify-center z-10 hover:bg-[#F3F1FF] rounded-md" onClick={() => handleStrokeWidth(w)}>
-                                        <span className={`w-[45px] h-[${w}px] bg-[#6D5BD0] rounded-full flex items-center justify-center`}></span>
+                                    <div key={w} className="w-[60px] h-[20px] flex items-center justify-center z-10" onClick={() => handleStrokeWidth(w)}>
+                                        <span className={`w-[60px] h-[${w}px] bg-black flex items-center justify-center`}></span>
                                     </div>
                                 ))}
                             </div>
                         ) : null}
                     </div>
 
-                    <input
-                        type="color"
-                        value={color}
-                        onChange={handleColorChange}
-                        className="h-[28px] w-[28px] rounded-full border border-[#6D5BD0]/30 shadow-sm cursor-pointer bg-white"
-                    />
+                    <input type="color" value={color} onChange={handleColorChange} />
                 </div>
             )}
 

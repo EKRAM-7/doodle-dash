@@ -40,7 +40,7 @@ export default function Players({ roomCode }) {
     }, [])
 
     return (
-        <div className="bg-cyan-300 w-2/4 p-2 rounded-md">
+        <div className="bg-cyan-300 w-2/4 h-[150px] p-2 rounded-md">
             {/* <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold">Players</h1> */}
             <h1 className="text-[1.5rem] font-bold">Players</h1>
             <ul>
@@ -58,7 +58,7 @@ export default function Players({ roomCode }) {
                 <li>Player 5</li>
                 <li>Player 6</li>
                 <li>Player 7</li>
-                <li>Player 8</li>  */}  
+                <li>Player 8</li>    */}
             </ul>
         </div>
     )

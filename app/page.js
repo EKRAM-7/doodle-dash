@@ -63,7 +63,13 @@ export default function Home() {
 		set(ref(rtdb, `room/${roomCode}`), {
 			gameState: 'not-started',
 			players: [user.uid],
-			drawingLines: []
+			drawingLines: [],
+			selectedWord: "",
+			whoseTurn: 0,
+			scoreBoard: {
+				[user.uid]: 0
+			},
+			round: 0
 		})
 
 		router.push(`/gameroom/${roomCode}`);
